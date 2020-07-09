@@ -1293,7 +1293,8 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
                     String message = "Health data - returns:" + originDataList.toString();
                     Logger.t(TAG).i(message);
 
-                    txt1.setText( ""+originDataList.get(0).getHighValue());
+
+                    txt1.setText( ""+originDataList.get(0).getDisValue());
                 }
 
                 @Override
