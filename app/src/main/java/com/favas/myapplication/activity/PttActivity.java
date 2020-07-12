@@ -3,6 +3,8 @@ package com.favas.myapplication.activity;
 import android.app.Activity;
 import android.os.Bundle;
 
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -21,35 +23,36 @@ import java.util.Arrays;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
+//import butterknife.OnClick;
 
 
 public class PttActivity extends Activity {
     private final static String TAG = PttActivity.class.getSimpleName();
     WriteResponse writeResponse = new WriteResponse();
-    @BindView(R.id.ptt_model)
+   // @BindView(R.id.ptt_model)
     TextView mPttModelTv;
-    @BindView(R.id.ptt_real_view)
+  //  @BindView(R.id.ptt_real_view)
     EcgHeartRealthView ecgHeartRealthView;
+    Button btnread;
 
     IPttDetectListener iPttDetectListener = new IPttDetectListener() {
         @Override
         public void onEcgDetectInfoChange(EcgDetectInfo ecgDetectInfo) {
-            Logger.t(TAG).i("ECG测量基本信息(波形频率,采样频率):" + ecgDetectInfo.toString());
+            Logger.t(TAG).i("ECG measurement basic information (waveform frequency, sampling frequency):" + ecgDetectInfo.toString());
 
 
         }
 
         @Override
         public void onEcgDetectStateChange(EcgDetectState ecgDetectState) {
-            Logger.t(TAG).i("ECG测量过程中的状态,设置顶部文本:" + ecgDetectState.toString());
+            Logger.t(TAG).i("ECG measurement process status, set the top text:" + ecgDetectState.toString());
 
 
         }
 
         @Override
         public void onEcgDetectResultChange(EcgDetectResult ecgDetectResult) {
-            Logger.t(TAG).i("ptt出值包(ECG测量的最终结果,在PTT模式下，只是异常时（即存在疾病）,才会出值)");
+            Logger.t(TAG).i("PTT out value package (the final result of ECG measurement, in PTT mode, only when abnormal (ie, there is a disease), only out of value)");
 
 
         }
@@ -69,36 +72,66 @@ public class PttActivity extends Activity {
         @Override
         public void inPttModel() {
             Logger.t(TAG).i("进入ptt模式");
-            mPttModelTv.setText("手表显示在PTT模式内");
+            mPttModelTv.setText("The watch is displayed in PTT mode");
         }
 
         @Override
         public void outPttModel() {
             Logger.t(TAG).i("退出ptt模式");
-            mPttModelTv.setText("手表显示退出PTT模式");
+            mPttModelTv.setText("Watch shows exiting PTT mode");
         }
     };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_ptt);
-        ButterKnife.bind(this);
+       // ButterKnife.bind(PttActivity.this);
+        ecgHeartRealthView=findViewById(R.id.ptt_real_view);
+        mPttModelTv=findViewById(R.id.ptt_model);
+        btnread=findViewById(R.id.ptt_sign_open);
+
+
         boolean inPttModel = getIntent().getBooleanExtra("inPttModel", false);
-        String ptStr = inPttModel ? "手表显示在PTT模式内" : "手表显示退出PTT模式";
+        String ptStr = inPttModel ? "The watch is displayed in PTT mode" : "Watch shows exiting PTT mode";
         mPttModelTv.setText(ptStr);
         listenModel();
+
+
+        btnread.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String a;
+                a="vv";
+             //   VPOperateManager.getMangerInstance(getApplicationContext()).settingPttModelListener(iPttDetectListener);
+                ecgHeartRealthView.clearData();
+                Logger.t(TAG).i("Read ptt signal");
+                VPOperateManager.getMangerInstance(getApplicationContext()).startReadPttSignData(writeResponse, true, iPttDetectListener);
+            }
+        });
+
+
+
     }
 
     private void listenModel() {
         VPOperateManager.getMangerInstance(getApplicationContext()).settingPttModelListener(iPttDetectListener);
     }
 
+
+    /*
     @OnClick(R.id.ptt_sign_open)
     public void enter() {
+
+
         ecgHeartRealthView.clearData();
-        Logger.t(TAG).i("读取ptt信号");
+        Logger.t(TAG).i("Read ptt signal");
         VPOperateManager.getMangerInstance(getApplicationContext()).startReadPttSignData(writeResponse, true, iPttDetectListener);
+
+
+
+
     }
 
     @OnClick(R.id.ptt_sign_close)
@@ -106,6 +139,8 @@ public class PttActivity extends Activity {
         Logger.t(TAG).i("关闭ptt信号");
         VPOperateManager.getMangerInstance(getApplicationContext()).stopReadPttSignData(writeResponse, false, iPttDetectListener);
     }
+
+     */
 
     /**
      * 写入的状态返回

@@ -1,9 +1,11 @@
 package com.favas.myapplication.activity;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -19,16 +21,17 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.room.Room;
 
+import com.favas.myapplication.Database.Db;
+import com.favas.myapplication.Database.TableBP_30MN;
 import com.favas.myapplication.R;
 import com.favas.myapplication.adapter.GridAdatper;
 import com.favas.myapplication.oad.activity.OadActivity;
-import com.google.gson.Gson;
 import com.orhanobut.logger.Logger;
 
 
 import com.veepoo.protocol.VPOperateManager;
-import com.veepoo.protocol.listener.base.IBleNotifyResponse;
 import com.veepoo.protocol.listener.base.IBleWriteResponse;
 import com.veepoo.protocol.listener.data.IAlarm2DataListListener;
 import com.veepoo.protocol.listener.data.IAlarmDataListener;
@@ -46,7 +49,6 @@ import com.veepoo.protocol.listener.data.ICustomSettingDataListener;
 import com.veepoo.protocol.listener.data.IDeviceControlPhoneModelState;
 import com.veepoo.protocol.listener.data.IDeviceFuctionDataListener;
 import com.veepoo.protocol.listener.data.IDrinkDataListener;
-import com.veepoo.protocol.listener.data.IECGDetectListener;
 import com.veepoo.protocol.listener.data.IFatigueDataListener;
 import com.veepoo.protocol.listener.data.IFindDeviceDatalistener;
 import com.veepoo.protocol.listener.data.IFindPhonelistener;
@@ -84,14 +86,13 @@ import com.veepoo.protocol.model.datas.BpSettingData;
 import com.veepoo.protocol.model.datas.CheckWearData;
 import com.veepoo.protocol.model.datas.CountDownData;
 import com.veepoo.protocol.model.datas.DrinkData;
-import com.veepoo.protocol.model.datas.EcgDetectInfo;
-import com.veepoo.protocol.model.datas.EcgDetectResult;
-import com.veepoo.protocol.model.datas.EcgDetectState;
 import com.veepoo.protocol.model.datas.FatigueData;
 import com.veepoo.protocol.model.datas.FindDeviceData;
 import com.veepoo.protocol.model.datas.FunctionDeviceSupportData;
 import com.veepoo.protocol.model.datas.FunctionSocailMsgData;
 import com.veepoo.protocol.model.datas.HRVOriginData;
+import com.veepoo.protocol.model.datas.HalfHourBpData;
+import com.veepoo.protocol.model.datas.HalfHourRateData;
 import com.veepoo.protocol.model.datas.HeartData;
 import com.veepoo.protocol.model.datas.HeartWaringData;
 import com.veepoo.protocol.model.datas.LanguageData;
@@ -144,19 +145,14 @@ import com.veepoo.protocol.model.settings.NightTurnWristSetting;
 import com.veepoo.protocol.model.settings.ScreenSetting;
 import com.veepoo.protocol.model.settings.WomenSetting;
 import com.veepoo.protocol.util.Spo2hOriginUtil;
-import com.veepoo.protocol.util.VPLogger;
-import com.veepoo.protocol.util.VpBleByteUtil;
-import com.vp.cso.hrvreport.JNIChange;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.lang.reflect.GenericSignatureFormatError;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 
 import static com.favas.myapplication.activity.Oprate.AIM_SPROT_CALC;
@@ -265,6 +261,10 @@ import static com.veepoo.protocol.model.enums.ELanguage.CHINA;
 public class OperaterActivity extends Activity implements AdapterView.OnItemClickListener {
     private final static String TAG = OperaterActivity.class.getSimpleName();
 
+
+
+   private Db db;
+
     TextView tv1, tv2, tv3,txt1;
     GridView mGridView;
     List<Map<String, String>> mGridData = new ArrayList<>();
@@ -273,7 +273,8 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
     private String deviceaddress;
     boolean isSleepPrecision = false;
     Message msg;
-    int count=0;
+    int count=0,datachange_count_half_hour=0,len_arr=0;
+
     Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -310,12 +311,24 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
     boolean isNewSportCalc = false;
     boolean isInPttModel = false;
 
-    String MSG_Heart="";
+    int  len_cardiac_loads=0;
+
+    private ArrayList<TableBP_30MN> list;
+
+
+    String MSG_Heart="",Msg_today_full="";
+    int special_cnt=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_operate);
+
+        db= Room.databaseBuilder(getApplicationContext(),Db.class,"Remo").allowMainThreadQueries().build();
+
+
+
+
         mContext = getApplicationContext();
         deviceaddress = getIntent().getStringExtra("deviceaddress");
 
@@ -325,6 +338,33 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
         tv3 = (TextView) super.findViewById(R.id.tv3);
         initGridView();
         listenDeviceCallbackData();
+
+
+        txt1.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+
+
+
+
+
+
+
+
+           //    db.getDAO_TbleBP_30MN().Add_Full_Record(list);
+           //     int len=     db.getDAO_TbleBP_30MN().getsize();
+//
+             //   WriteFile("testing"+"\n\n\n"+Msg_today_full,"test1.txt");
+
+
+          //     WriteFile("BP  datas of specif date"+"\n\n\n"+Msg_today_full,"specific_day_data.txt");
+
+                Toast.makeText(getApplicationContext(),""+ special_cnt+"--"+Msg_today_full,Toast.LENGTH_LONG).show();
+
+                return false;
+            }
+        });
+
     }
 
     private void initGridView() {
@@ -347,8 +387,10 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
         tv1.setText("");
         tv2.setText("");
         tv3.setText("");
-        txt1.setText(""+oprater);
 
+
+     //   txt1.setText(""+oprater);
+txt1.setText(""+Msg_today_full);
 
         if (oprater.equals(HEART_DETECT_START)) {
 
@@ -371,7 +413,7 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
                     if(count ==25)
                     {
 
-                        WriteFile(MSG_Heart);
+                        WriteFile(MSG_Heart,"LiveData.txt");
                     }
 
 
@@ -411,6 +453,7 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
             Intent intent = new Intent(OperaterActivity.this, PttActivity.class);
             intent.putExtra("inPttModel", isInPttModel);
             startActivity(intent);
+            
 
         } else if (oprater.equals(DETECT_START_ECG) || oprater.equals(DETECT_STOP_ECG)) {
             startActivity(new Intent(OperaterActivity.this, EcgDetectActivity.class));
@@ -525,6 +568,8 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
                     contactMsgLength = functionSupport.getContactMsgLength();
                     allMsgLenght = functionSupport.getAllMsgLength();
                     isSleepPrecision = functionSupport.getPrecisionSleep() == SUPPORT;
+                 //   Toast.makeText(getApplicationContext(),""+watchDataDay,Toast.LENGTH_LONG).show();
+
                 }
             }, new ISocialMsgDataListener() {
                 @Override
@@ -540,7 +585,7 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
                     Logger.t(TAG).i(message);
                     sendMsg(message, 4);
                 }
-            }, "0000", is24Hourmodel);
+            }, "3282", is24Hourmodel);
 
         } else if (oprater.equals(PWD_MODIFY)) {
             VPOperateManager.getMangerInstance(mContext).modifyDevicePwd(writeResponse, new IPwdDataListener() {
@@ -549,8 +594,9 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
                     String message = "PwdData:\n" + pwd.toString();
                     Logger.t(TAG).i(message);
                     sendMsg(message, 1);
+                    txt1.setText("Password Changed");
                 }
-            }, "0000");
+            }, "3282");
         } else if (oprater.equals(SPORT_CURRENT_READ)) {
             VPOperateManager.getMangerInstance(mContext).readSportStep(writeResponse, new ISportDataListener() {
                 @Override
@@ -1286,6 +1332,8 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
             });
         } else if (oprater.equals(READ_HEALTH_ORIGINAL)) {
 
+            new GetResults_5min_interval().execute();
+            /*
             VPOperateManager.getMangerInstance(mContext).readOriginData(writeResponse, new IOriginData3Listener() {
 
                 @Override
@@ -1334,39 +1382,150 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
                     Logger.t(TAG).i(message);
                 }
             }, 3);
+
+
+             */
         } else if (oprater.equals(READ_HEALTH_ORIGINAL_FROM)) {
-            int yesterday = 1;
-            VPOperateManager.getMangerInstance(mContext).readOriginDataFromDay(writeResponse, new IOriginDataListener() {
+
+
+            new GetResults_Specific_Day().execute();
+            /*
+            int day = 2;
+            VPOperateManager.getMangerInstance(mContext).readOriginDataFromDay(writeResponse, new IOriginData3Listener() {
                 @Override
-                public void onOringinFiveMinuteDataChange(OriginData originData) {
-                    String message = "健康数据[5分钟]-返回:" + originData.toString();
-                    Logger.t(TAG).i(message);
+                public void onReadOriginProgressDetail(int i, String s, int i1, int i2) {
+
                 }
 
                 @Override
-                public void onOringinHalfHourDataChange(OriginHalfHourData originHalfHourData) {
-                    String message = "健康数据[30分钟]-返回:" + originHalfHourData.toString();
-                    Logger.t(TAG).i(message);
-                }
-
-                @Override
-                public void onReadOriginProgress(float progress) {
-                    String message = "健康数据[5分钟]-读取进度:" + progress;
-                    Logger.t(TAG).i(message);
-                }
-
-                @Override
-                public void onReadOriginProgressDetail(int date, String dates, int all, int num) {
+                public void onReadOriginProgress(float v) {
 
                 }
 
                 @Override
                 public void onReadOriginComplete() {
-                    String message = "健康数据-读取结束";
-                    Logger.t(TAG).i(message);
+
                 }
-            }, yesterday, 10, watchDataDay);
-        } else if (oprater.equals(READ_HEALTH_ORIGINAL_SINGLEDAY)) {
+
+
+
+
+
+                @Override
+                public void onOriginFiveMinuteListDataChange(List<OriginData3> list) {
+
+                    int len= list.size();
+               //     len_arr=     list.size();
+                    for(int j=0;j<=len;j++)
+                    {
+                        String message=""+  list.get(j).getHighValue();
+
+                        Logger.t(TAG).i("bismillah.."+message);
+
+                       // Logger.t(TAG).i(message);
+                      //  Msg_today_full="4---"+Msg_today_full+message;
+                    }
+
+
+
+
+
+                }
+
+                @Override
+                public void onOriginHalfHourDataChange(OriginHalfHourData originHalfHourData) {
+
+
+                int len=    originHalfHourData.getHalfHourBps().size();
+
+
+
+                    
+                    for(int j=0;j<=len;j++)
+                    {
+                        String message=""+   originHalfHourData.getHalfHourBps().get(j).getDate();
+
+                        Logger.t(TAG).i(message);
+
+
+                        Msg_today_full="4---"+Msg_today_full+message;
+
+                        Logger.t(TAG).i("bismillah--"+message);
+                    }
+
+
+
+
+
+
+
+                }
+
+                @Override
+                public void onOriginHRVOriginListDataChange(List<HRVOriginData> list) {
+
+
+
+
+
+
+                }
+
+                @Override
+                public void onOriginSpo2OriginListDataChange(List<Spo2hOriginData> list) {
+                    len_arr=     list.size();
+
+                }
+*/
+
+                /*
+
+                @Override
+                public void onOringinFiveMinuteDataChange(OriginData originData) {
+                    String message = "Health data [5 minutes]-return:" + originData.toString();
+                    Logger.t(TAG).i(message);
+
+
+                    Msg_today_full="4---"+Msg_today_full+message;
+                }
+
+                @Override
+                public void onOringinHalfHourDataChange(OriginHalfHourData originHalfHourData) {
+                    String message = "Health data [30 minutes]-return:\n" +
+                            "\n" + originHalfHourData.toString();
+                    Logger.t(TAG).i(message);
+                    Msg_today_full="4---"+Msg_today_full+message;
+                }
+
+                @Override
+                public void onReadOriginProgress(float progress) {
+                    String message = "Health data [5 minutes]-read progress:" + progress;
+                    Logger.t(TAG).i(message);
+                    Msg_today_full="4---"+Msg_today_full+message;
+                }
+
+                @Override
+                public void onReadOriginProgressDetail(int date, String dates, int all, int num) {
+                    Msg_today_full="4---"+Msg_today_full;
+                }
+
+                @Override
+                public void onReadOriginComplete() {
+                    String message = "Health data-end of reading";
+                    Logger.t(TAG).i(message);
+
+                    Msg_today_full="4---"+Msg_today_full+message;
+                   // watchDataDay
+                }
+
+                */
+         //   }, day, 10, watchDataDay);
+
+
+        }
+
+
+        else if (oprater.equals(READ_HEALTH_ORIGINAL_SINGLEDAY)) {
             int today = 0;
             int originProtocolVersion = 3;
             IOriginProgressListener originDataListener = new IOriginDataListener() {
@@ -1403,10 +1562,12 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
                 @Override
                 public void onOriginFiveMinuteListDataChange(List<OriginData3> originData3List) {
                     String message = "健康数据[5分钟]-返回:" + originData3List.size();
-//                    for (int i = 0; i < originData3List.size(); i++) {
-//                        String s = originData3List.get(i).toString();
-//                        Logger.t(TAG).i(s);
-//                    }
+                    for (int i = 0; i < originData3List.size(); i++) {
+                       String s = originData3List.get(i).toString();
+                       Logger.t(TAG).i(s);
+
+
+                   }
                     Logger.t(TAG).i(message);
                 }
 
@@ -1682,14 +1843,14 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
 
     }
 
-    private void WriteFile(String msg1) {
+    private void WriteFile(String msg1,String sFileName) {
 
 
 
         if (ContextCompat.checkSelfPermission(getApplicationContext(),
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(OperaterActivity.this,
-                    new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 11);
+                    new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 11);
         }
         else
         {
@@ -1705,13 +1866,15 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
 
 
 
-                String sFileName="Heart.txt";
+
 
                 File gpxfile = new File(dir, sFileName);
                 FileWriter writer = new FileWriter(gpxfile);
                 writer.append(msg1);
                 writer.flush();
                 writer.close();
+
+                Toast.makeText(getApplicationContext(),"File created ",Toast.LENGTH_LONG).show();
             }
             catch (Exception e)
             {
@@ -1808,4 +1971,497 @@ public class OperaterActivity extends Activity implements AdapterView.OnItemClic
             }
         });
     }
+
+
+
+    private class GetResults_Specific_Day extends AsyncTask<Void, Void, Void> {
+
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+            int day = 2;
+            VPOperateManager.getMangerInstance(mContext).readOriginDataFromDay(writeResponse, new IOriginData3Listener() {
+                @Override
+                public void onReadOriginProgressDetail(int i, String s, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onReadOriginProgress(float v) {
+
+                }
+
+                @Override
+                public void onReadOriginComplete() {
+
+                }
+
+
+
+
+
+                @Override
+                public void onOriginFiveMinuteListDataChange(List<OriginData3> list) {
+
+                   int len= list.size();
+
+                    loop:      for(int j=0;j<=len;j++)
+                    {
+
+
+
+
+
+
+
+
+                   /*     int[] apneaResults=       list.get(j).getApneaResults();
+                        int   len_apnea=apneaResults.length;
+
+                        for(int k=0;k<len_apnea;k++)
+                        {
+                            int a;
+
+                            try
+                            {
+                                a= apneaResults[k];
+                            }
+                            catch(Exception e)
+                            {
+                                a=0;
+                            }
+
+                            Msg_today_full=Msg_today_full+a;
+                           if(len_apnea==k+1)
+                            {
+                                break loop;
+                            }
+
+
+
+
+
+
+
+
+
+
+                        }
+
+
+
+                    */
+
+
+
+
+
+
+/* ppgs
+                        int[] ppgs=       list.get(j).getPpgs();
+
+                        int   len_ppgs=ppgs.length;
+
+                        for(int k=0;k<len_ppgs;k++)
+                        {
+                            int a;
+
+                            try
+                            {
+                                a= ppgs[k];
+                            }
+                            catch(Exception e)
+                            {
+                                a=0;
+                            }
+
+                            Msg_today_full=Msg_today_full+a;
+                            if(len_ppgs==k+1)
+                            {
+                                break loop;
+                            }
+
+
+
+
+
+
+
+
+                        }
+
+
+
+ */
+
+
+/*
+                        int[] hypoxiaTimes=       list.get(j).getHypoxiaTimes();
+
+                         int   len_hypoxia_times=hypoxiaTimes.length;
+
+                        for(int k=0;k<len_hypoxia_times;k++)
+                        {
+                            int a;
+
+                            try
+                            {
+                                a= hypoxiaTimes[k];
+                            }
+                            catch(Exception e)
+                            {
+                                a=0;
+                            }
+
+                            Msg_today_full=Msg_today_full+a;
+                            if(len_hypoxia_times==k+1)
+                            {
+                                break loop;
+                            }
+
+
+
+
+
+
+
+
+                        }
+
+
+
+ */
+                        //cardiac loads
+                        /*
+                        int[] cardiacLoads=  list.get(j).getCardiacLoads();
+                        len_cardiac_loads=cardiacLoads.length;
+
+                        for(int k=0;k<len_cardiac_loads;k++)
+                        {
+                            int a;
+
+                            try
+                            {
+                                a= cardiacLoads[k];
+                            }
+                            catch(Exception e)
+                            {
+                                a=0;
+                            }
+
+                            Msg_today_full=Msg_today_full+a;
+                            if(len_cardiac_loads==k+1)
+                            {
+                                break loop;
+                            }
+
+
+
+
+
+                        }
+
+                         */
+
+
+
+
+                            //       BP  String message=""+  list.get(j).getHighValue();
+
+
+
+
+                     // ecg
+                    /*    int[] ecgs=list.get(j).getEcgs();
+                          int len_ecg=ecgs.length;
+
+                          for(int k=0;k<len_ecg;k++)
+                          {
+
+                              int a;
+
+                              try
+                              {
+                                  a=ecgs[k];
+                              }
+                              catch(Exception e)
+                              {
+                                  a=0;
+                              }
+
+
+                              Msg_today_full=Msg_today_full+a;
+                          }
+
+
+                     */
+
+
+
+
+
+                    //    Msg_today_full=Msg_today_full+ecgs.toString();
+
+
+
+
+
+
+
+
+
+
+
+
+                       // Logger.t(TAG).i("ecg.."+message);
+
+                      //  len_arr=    len_arr+message.length();
+
+                        // Logger.t(TAG).i(message);
+
+                    }
+
+
+
+
+
+                }
+
+                @Override
+                public void onOriginHalfHourDataChange(OriginHalfHourData originHalfHourData) {
+
+
+                  //     originHalfHourData.getAllStep();
+               /*     List<HalfHourRateData> list=        originHalfHourData.getHalfHourRateDatas();
+
+                    int len=    list.size();
+                    special_cnt=len;
+
+                    for(int j=0;j<len;j++)
+                    {
+                    int a=    list.get(j).getEcgCount();
+
+                        Msg_today_full=Msg_today_full+a;
+
+                    }
+
+                */
+
+
+/*
+                    int len=    originHalfHourData.getHalfHourBps().size();
+
+
+
+
+                    for(int j=0;j<=len;j++)
+                    {
+                        String message=""+   originHalfHourData.getHalfHourBps().get(j).getDate();
+
+                        Logger.t(TAG).i(message);
+
+
+                    //    Msg_today_full="4---"+Msg_today_full+message;
+
+                        Logger.t(TAG).i("bismillah--"+message);
+                    }
+
+
+
+
+
+
+ */
+
+
+                }
+
+                @Override
+                public void onOriginHRVOriginListDataChange(List<HRVOriginData> list) {
+
+
+
+
+
+
+
+                    int len=         list.size();
+                 // no records herer
+
+
+
+                }
+
+                @Override
+                public void onOriginSpo2OriginListDataChange(List<Spo2hOriginData> list) {
+                    int len=         list.size();
+                    special_cnt=len;
+
+                    for(int j=0;j<len;j++)
+                    {
+                       int a= list.get(j).getOxygenValue();
+                        Msg_today_full=Msg_today_full+a;
+
+                    }
+
+                 //   list.get(0).getOxygenValue();
+
+                }
+
+
+
+            }, day, 10, watchDataDay);
+
+
+
+
+            return null;
+        }
+
+
+    }
+
+
+
+    private class GetResults_5min_interval extends AsyncTask<Void, Void, Void> {
+
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+
+            db.getDAO_TbleBP_30MN().Del_All_Record();
+
+            list=new ArrayList<>();
+
+
+            VPOperateManager.getMangerInstance(mContext).readOriginData(writeResponse, new IOriginData3Listener() {
+
+                @Override
+                public void onOriginFiveMinuteListDataChange(List<OriginData3> originDataList) {
+                    String message = "Health data - returns:" + originDataList.toString();
+                  //  Logger.t(TAG).i(message);
+
+               int len=     originDataList.size();
+
+            /*   for(int j=0;j<len;j++)
+               {
+                   originDataList.get(j).getEcgs();
+
+               }
+
+
+             */
+
+
+                 //   Msg_today_full="1"+Msg_today_full+message;
+                }
+
+                @Override
+                public void onOriginHalfHourDataChange(OriginHalfHourData originHalfHourDataList) {
+                    String message = "Health data [30 minutes]-return:" + originHalfHourDataList.toString();
+              //      Logger.t(TAG).i(message);
+
+
+
+
+                   int len= originHalfHourDataList.getHalfHourBps().size();
+
+
+
+                   for(int j=0;j< len;j++)
+                   {
+                       HalfHourBpData row= originHalfHourDataList.getHalfHourBps().get(j);
+
+                    String hbp=""+   row.getHighValue();
+                     String lbp=""+  row.getLowValue();
+                      String dat= row.getDate();
+                       String tim=""+ row.getTime();
+
+
+                       db.getDAO_TbleBP_30MN().Add_Record(new TableBP_30MN(0,""+dat,""+tim,""+hbp,""+lbp));
+                       //list.add(new TableBP_30MN(0,"s","d","d","df"));
+
+
+                   }
+
+
+
+
+
+
+
+
+                }
+
+                @Override
+                public void onOriginHRVOriginListDataChange(List<HRVOriginData> originHrvDataList) {
+                    String message = "Health data [30 minutes]-HRV:" + originHrvDataList.size();
+                    Logger.t(TAG).i(message);
+
+
+                    int len= originHrvDataList.size();
+
+/*
+
+                    for(int j=0;j< len;j++)
+                    {
+
+                    }
+
+
+
+
+                    for(HRVOriginData row:originHrvDataList)
+                    {
+                        Msg_today_full= Msg_today_full+"******"+row.getHrvValue();
+                    }
+
+
+                  */
+
+
+                }
+
+                @Override
+                public void onOriginSpo2OriginListDataChange(List<Spo2hOriginData> originSpo2hDataList) {
+
+                }
+
+
+                @Override
+                public void onReadOriginProgress(float progress) {
+                    String message = "Health data [5 minutes]-read progress:" + progress;
+                   Logger.t(TAG).i(message);
+                   Msg_today_full="4---"+Msg_today_full+message;
+                }
+
+                @Override
+                public void onReadOriginProgressDetail(int date, String dates, int all, int num) {
+                    String message = "Health data [5 minutes]-reading progress detail\n"  + date + ",dates=" + dates;
+                   Logger.t(TAG).i(message);
+                //    Msg_today_full="5"+Msg_today_full+message;
+                }
+
+
+                @Override
+                public void onReadOriginComplete() {
+                    String message = "健康数据-读取结束";
+                    Logger.t(TAG).i(message);
+                //    Msg_today_full="6"+Msg_today_full+message;
+                }
+            }, 3);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+    }
+
+
+
+
 }

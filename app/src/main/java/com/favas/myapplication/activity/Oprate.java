@@ -78,7 +78,7 @@ public interface Oprate {
     public final static String READ_HEALTH_SLEEP_FROM = "读取健康数据-睡眠-从哪天起";
     public final static String READ_HEALTH_SLEEP_SINGLEDAY = "读取健康数据-睡眠-读这天";
     public final static String READ_HEALTH_ORIGINAL = "Read health data - 5 minutes";
-    public final static String READ_HEALTH_ORIGINAL_FROM = "Read health data - from what day";
+    public final static String READ_HEALTH_ORIGINAL_FROM = "Read health data - from specific day";
     public final static String READ_HEALTH_ORIGINAL_SINGLEDAY = "Read Health Data - Read the Day";
     public final static String READ_HEALTH = "读取健康数据-全部";
     public final static String OAD = "Firmware upgrade";

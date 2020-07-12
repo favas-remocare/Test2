@@ -57,7 +57,7 @@ public class GridAdatper extends BaseAdapter {
         Map<String, String> map = mGridData.get(i);
         mGridHold.mButton.setText(map.get("str"));
 
-        if(map.get("str").trim().equals("Measuring heart rate-start")  || map.get("str").trim().equals("Measuring heart rate-end")  || map.get("str").trim().contains("Measuring blood pressure") || map.get("str").trim().contains("Device password") || map.get("str").trim().contains("Blood Oxygen") || map.get("str").trim().contains("Current step count-read")  )
+        if(map.get("str").trim().equals("Measuring heart rate-start")  || map.get("str").trim().equals("Measuring heart rate-end")  || map.get("str").trim().contains("Measuring blood pressure") || map.get("str").trim().contains("Device password") || map.get("str").trim().contains("Blood Oxygen") || map.get("str").trim().contains("Current step count-read") || map.get("str").trim().contains("Read health data - 5 minutes")   )
         {
             mGridHold.mButton.setBackgroundResource(R.color.colorAccent);
         }

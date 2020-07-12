@@ -56,6 +56,7 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
     private final static String YOUR_APPLICATION = "timaimee";
     Context mContext = MainActivity.this;
     private final int REQUEST_CODE = 1;
+    private static final int MY_PERMISSIONS_REQUEST_CODE = 123;
     List<SearchResult> mListData = new ArrayList<>();
     List<String> mListAddress = new ArrayList<>();
     SwipeRefreshLayout mSwipeRefreshLayout;
@@ -119,15 +120,94 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
             return;
         }
 
+
+
+
+
+
+
+
+        /*
         int permissionCheck = ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION);
-        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+        int permissionCheck2 = ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        int permissionCheck3 = ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION);
+        int permissionCheck4 = ContextCompat.checkSelfPermission(mContext, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED  && permissionCheck2 == PackageManager.PERMISSION_GRANTED  && permissionCheck3 == PackageManager.PERMISSION_GRANTED   ) {
             Logger.t(TAG).i("checkPermission,PERMISSION_GRANTED");
             initBLE();
         } else if (permissionCheck == PackageManager.PERMISSION_DENIED) {
             requestPermission();
             Logger.t(TAG).i("checkPermission,PERMISSION_DENIED");
         }
+
+         */
+
+
+
+        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION)+ ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)+ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION)+ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) + ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_PHONE_STATE) + ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)  != PackageManager.PERMISSION_GRANTED)
+        {
+
+            if(ActivityCompat.shouldShowRequestPermissionRationale(
+                    MainActivity.this,Manifest.permission.ACCESS_COARSE_LOCATION)   || ActivityCompat.shouldShowRequestPermissionRationale(
+                    MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)    || ActivityCompat.shouldShowRequestPermissionRationale(
+                    MainActivity.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) || ActivityCompat.shouldShowRequestPermissionRationale(
+                    MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)  ||  ActivityCompat.shouldShowRequestPermissionRationale(
+                    MainActivity.this, Manifest.permission.READ_PHONE_STATE) ||  ActivityCompat.shouldShowRequestPermissionRationale(
+                    MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) )
+            {
+
+
+
+
+                Request_Perm();
+            }
+            else
+            {
+
+                Request_Perm();
+
+            }
+
+
+
+
+        }
+        else
+        {
+            initBLE();
+        }
+
+
+
+
+
+
     }
+
+
+private void Request_Perm()
+{
+
+    ActivityCompat.requestPermissions(
+            MainActivity.this,
+            new String[]{
+
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_PHONE_STATE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+
+            },
+            MY_PERMISSIONS_REQUEST_CODE
+    );
+
+
+}
+
+
+
 
     private void requestPermission() {
         if (ContextCompat.checkSelfPermission(mContext,
@@ -162,6 +242,38 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
                 }
                 return;
             }
+
+
+            case MY_PERMISSIONS_REQUEST_CODE:{
+                // When request is cancelled, the results array are empty
+                if(
+                        (grantResults.length >0) &&
+                                (grantResults[0]+   grantResults[1] + grantResults[2]+grantResults[3]+grantResults[4]+grantResults[5] == PackageManager.PERMISSION_GRANTED)
+                )
+                {
+
+                    Toast.makeText(getApplicationContext(),"permn granted",Toast.LENGTH_LONG).show();
+                    // Permissions are granted
+                 //   ModNep.btntoast(getApplicationContext(),getLayoutInflater(),"PERMISSION GRANTED");
+
+               //     Create_Dir_and_DB();
+                }
+
+
+
+
+                else {
+
+                   // lmain.setVisibility(View.GONE);
+                    // Permissions are denied
+                  //  ModNep.btntoast(getApplicationContext(),getLayoutInflater(),"PERMISSION DENIED");
+                }
+                return;
+            }
+
+
+
+
         }
     }
 
