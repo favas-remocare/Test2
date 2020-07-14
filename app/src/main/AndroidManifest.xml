@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.favas.myapplication">
 
-
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -13,13 +12,9 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-
-
     <uses-feature
         android:name="android.hardware.bluetooth_le"
         android:required="true" />
-
-
 
     <application
         android:allowBackup="true"
@@ -28,17 +23,18 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity
+            android:name=".ui.login.LoginActivity"
+            android:label="@string/title_activity_login"></activity>
 
         <provider
-
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.favas.myapplication.activity.OperaterActivity"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-
-                android:resource="@xml/file_provider_paths"/>
+                android:resource="@xml/file_provider_paths" />
         </provider>
 
         <activity
@@ -58,16 +54,9 @@
         <activity android:name=".oad.activity.OadActivity" />
         <activity android:name=".oad.activity.NotificationActivity" />
         <activity android:name=".activity.PttActivity" />
+
         <service android:name="com.inuker.bluetooth.library.BluetoothService" />
         <service android:name=".oad.service.DfuService" />
-
-
-
     </application>
-
-
-
-
-
 
 </manifest>
